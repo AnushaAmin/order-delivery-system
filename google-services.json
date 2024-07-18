@@ -1,0 +1,29 @@
+{
+    "project_info": {
+      "project_number": "681271076964",
+      "project_id": "order-delivery-42632",
+      "storage_bucket": "order-delivery-42632.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:681271076964:android:fd0153982d5f0dd8c75771",
+          "android_client_info": {
+            "package_name": "com.yourcompany.orderdelivery"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyAfmvV8Gef3YsXnxEc8jles_prvFCLdrYY"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
