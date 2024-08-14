@@ -17,7 +17,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
       const userDoc = firebase.firestore().collection('deliveryLocations').doc(user.uid);
 
       for (const location of locations) {
-       // console.log('Background location update:', location);
+        console.log('Background location update:', location); // Added log for debugging
         await userDoc.set({
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -29,24 +29,26 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
 });
 
 export async function startBackgroundLocationTracking() {
+  const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
   const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-  if (backgroundStatus === 'granted') {
+
+  if (foregroundStatus === 'granted' && backgroundStatus === 'granted') {
     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
       accuracy: Location.Accuracy.High,
       distanceInterval: 1, // Minimum change (in meters) between updates
-      timeInterval: 5000, // Minimum interval (in milliseconds) between updates
+      timeInterval: 60000, // Minimum interval (in milliseconds) between updates
       foregroundService: {
         notificationTitle: 'Tracking your location',
         notificationBody: 'Your location is being used to track your delivery personnel.',
       },
     });
-   // console.log('Background location tracking started.');
+    console.log('Background location tracking started.'); // Added log
   } else {
-    console.error('Background location permission not granted');
+    console.error('Location permissions not granted');
   }
 }
 
 export async function stopBackgroundLocationTracking() {
   await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
- // console.log('Background location tracking stopped.');
+  console.log('Background location tracking stopped.'); // Added log
 }

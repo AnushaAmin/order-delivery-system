@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { auth } from '../../firebase'; 
 
@@ -7,20 +7,10 @@ export default function AdminLoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        navigation.navigate('Admin');
-      }
-    });
-    return unsubscribe;
-  }, [navigation]);
-
   const handleLogin = async () => {
     setLoading(true);
     try {
       await auth.signInWithEmailAndPassword(email, password);
-      navigation.navigate('Admin');
     } catch (error) {
       console.error(error);
       alert('Failed to login. Please check your credentials.');
@@ -29,9 +19,9 @@ export default function AdminLoginScreen({ navigation }) {
     }
   };
 
-  const handleBackOption = async () => {
+  const handleBackOption = () => {
     navigation.navigate('MainScreen');
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -65,6 +55,7 @@ export default function AdminLoginScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

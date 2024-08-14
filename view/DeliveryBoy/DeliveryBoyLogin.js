@@ -14,7 +14,7 @@ export default function DeliveryBoyLogin({ navigation }) {
           const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
           const doc = await deliveryBoyRef.get();
           if (doc.exists) {
-            navigation.navigate('DeliveryBoyScreen');
+            //navigation.navigate('DeliveryPersonStack', { screen: 'DeliveryBoyScreen' });
           } else {
             await auth.signOut();
           }
@@ -24,7 +24,7 @@ export default function DeliveryBoyLogin({ navigation }) {
       }
     });
 
-    return unsubscribe; 
+    return unsubscribe; // Cleanup subscription on unmount
   }, [navigation]);
 
   const handleLogin = async () => {
@@ -33,15 +33,16 @@ export default function DeliveryBoyLogin({ navigation }) {
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const { user } = userCredential;
 
-      
+      // Check if the user exists in the deliveryBoys collection
       const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
       const doc = await deliveryBoyRef.get();
 
       if (doc.exists) {
-        navigation.navigate('DeliveryBoyScreen');
+       // navigation.navigate('DeliveryPersonStack', { screen: 'DeliveryBoyScreen' });
       } else {
+        // If user does not exist in deliveryBoys collection, show alert
         alert('You are not authorized to login as a delivery boy.');
-        await auth.signOut(); 
+        await auth.signOut(); // Sign out the user if not authorized
       }
     } catch (error) {
       console.error(error);

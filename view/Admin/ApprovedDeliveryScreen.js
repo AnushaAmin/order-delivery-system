@@ -19,8 +19,7 @@ export default function ApprovedDeliveryScreen({ navigation }) {
   }, []);
 
   const handleDeliveryBoyPress = (deliveryBoy) => {
-    // Navigate to a screen showing delivery boy's current location
-    navigation.navigate('DeliveryBoyScreen', { deliveryBoy });
+    navigation.navigate('DeliveryBoyDetailsScreen', { deliveryBoy });
   };
 
   const renderItem = ({ item }) => (
@@ -69,7 +68,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-    color:'white'
+    color: 'white'
   },
   flatList: {
     width: '100%',

@@ -1,67 +1,62 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../locationTask';
-import { auth } from '../../firebase'; // Make sure this imports your firebase auth instance
-
-const LOCATION_TASK_NAME = 'background-location-task';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { auth, firestore } from '../../firebase';
 
 export default function DeliveryBoyScreen({ navigation }) {
-  const [location, setLocation] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [time, setTime] = useState(new Date().toLocaleTimeString());
 
   useEffect(() => {
-    let intervalId;
-
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        console.error('Permission to access location was denied');
-        return;
-      }
-
+    const fetchAssignedTasks = async () => {
       try {
-        await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 1000, // Update every second
-            distanceInterval: 1, // Update every meter
-          },
-          (newLocation) => {
-            setLocation(newLocation);
-          }
-        );
+        const user = auth.currentUser;
+        if (user) {
+          const tasksSnapshot = await firestore.collection('packages')
+            .where('assignedTo', '==', user.uid)
+            .get();
 
-        await startBackgroundLocationTracking();
-
-        intervalId = setInterval(async () => {
-          setTime(new Date().toLocaleTimeString());
-
-          let updatedLocation = await Location.getCurrentPositionAsync({});
-          setLocation(updatedLocation);
-        }, 60000); // 60000 ms = 1 minute
-
-        setTime(new Date().toLocaleTimeString());
+          const tasksList = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setTasks(tasksList);
+        } else {
+          setErrorMsg('User not logged in.');
+        }
       } catch (error) {
-        console.error('Error in location tracking:', error);
-        setErrorMsg('Error in location tracking. Please check logs for details.');
+        console.error('Error fetching tasks:', error);
+        setErrorMsg('Error fetching tasks. Please check logs for details.');
       }
-    })();
-
-    // Clean up interval and stop background tracking
-    return () => {
-      clearInterval(intervalId);
-      stopBackgroundLocationTracking();
     };
+
+    fetchAssignedTasks();
   }, []);
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const taskRef = firestore.collection('packages').doc(taskId);
+
+      if (newStatus === 'DELIVERED') {
+        await taskRef.update({
+          status: newStatus,
+          deliveredOn: new Date() // Save the delivery date
+        });
+      } else {
+        await taskRef.update({ status: newStatus });
+      }
+
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId ? { ...task, status: newStatus, deliveredOn: newStatus === 'DELIVERED' ? new Date() : task.deliveredOn } : task
+        )
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setErrorMsg('Error updating status. Please check logs for details.');
+    }
+  };
 
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      navigation.navigate('DeliveryBoyLogin');
+      navigation.navigate('MainScreen');
     } catch (error) {
       console.error('Failed to logout:', error);
       alert('Failed to logout.');
@@ -70,32 +65,50 @@ export default function DeliveryBoyScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {errorMsg && <Text>{errorMsg}</Text>}
-      {location && (
-        <MapView
-          style={styles.map}
-          region={{
-            latitude: location?.coords?.latitude || 0,
-            longitude: location?.coords?.longitude || 0,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {errorMsg && <Text style={styles.errorMsg}>{errorMsg}</Text>}
+        <Text style={styles.title}>Assigned Tasks</Text>
+        {tasks.length > 0 ? (
+          tasks.map(task => (
+            <View key={task.id} style={styles.task}>
+              <Text style={styles.taskText}>Package: {task.packageName}</Text>
+              <Text style={styles.taskText}>Details: {task.packageDetails}</Text>
+              <Text style={styles.taskText}>Status: {task.status}</Text>
+              {task.status === 'ASSIGNED' && (
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleStatusChange(task.id, 'IN_TRANSIT')}
+                >
+                  <Text style={styles.buttonText}>Start Delivery</Text>
+                </TouchableOpacity>
+              )}
+              {task.status === 'IN_TRANSIT' && (
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleStatusChange(task.id, 'DELIVERED')}
+                >
+                  <Text style={styles.buttonText}>Mark as Delivered</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))
+        ) : (
+          <Text>No tasks assigned.</Text>
+        )}
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => {
+            const user = auth.currentUser;
+            if (user) {
+              navigation.navigate('ViewLocation', { deliveryBoyId: user.uid });
+            } else {
+              setErrorMsg('User not logged in.');
+            }
           }}
         >
-          <Marker
-            coordinate={{
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }}
-            title="You are here"
-          />
-        </MapView>
-      )}
-      <Text style={styles.time}>Current Time: {time}</Text>
-      {location && (
-        <Text style={styles.location}>
-          Latitude: {location.coords.latitude.toFixed(4)}, Longitude: {location.coords.longitude.toFixed(4)}
-        </Text>
-      )}
+          <Text style={styles.buttonText}>View Location</Text>
+        </TouchableOpacity>
+      </ScrollView>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
@@ -106,20 +119,46 @@ export default function DeliveryBoyScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Center content vertically
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  map: {
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorMsg: {
+    color: 'red',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  task: {
     width: '100%',
-    height: '50%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  time: {
-    marginTop: 20,
-    fontSize: 18,
+  taskText: {
+    fontSize: 16,
   },
-  location: {
+  button: {
+    backgroundColor: 'orange',
+    padding: 10,
+    borderRadius: 5,
     marginTop: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
     fontSize: 16,
   },
   logoutButton: {
