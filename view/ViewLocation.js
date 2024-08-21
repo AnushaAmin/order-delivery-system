@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { firebase, firestore } from '../firebase';
-import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from './locationTask'; // Import the tracking functions
+import { startLocationUpdates, stopLocationUpdates } from './locationTask';
 
 export default function ViewLocation({ route }) {
   const { deliveryBoyId } = route.params;
@@ -15,7 +15,8 @@ export default function ViewLocation({ route }) {
     const updateLocationInDatabase = async (lat, long) => {
       try {
         await firestore.collection('deliveryBoys').doc(deliveryBoyId).set({
-          location: new firebase.firestore.GeoPoint(lat, long) // Use firebase.firestore.GeoPoint
+          location: new firebase.firestore.GeoPoint(lat, long),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // Update the timestamp
         }, { merge: true });
         console.log('Location updated in Firestore:', lat, long);
       } catch (err) {
@@ -56,13 +57,9 @@ export default function ViewLocation({ route }) {
 
     fetchLocation();
 
-    // Start background location tracking
-    startBackgroundLocationTracking();
+    startLocationUpdates(); // Start background location updates
 
-    // Cleanup function to stop background location tracking when the component unmounts
-    return () => {
-      stopBackgroundLocationTracking();
-    };
+    return () => stopLocationUpdates(); // Stop background updates on component unmount
   }, [deliveryBoyId]);
 
   if (loading) {

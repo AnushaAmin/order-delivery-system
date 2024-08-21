@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { auth, firestore } from '../../firebase';
+import { startLocationUpdates } from '../locationTask';
 
 export default function DeliveryBoyLogin({ navigation }) {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ export default function DeliveryBoyLogin({ navigation }) {
           const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
           const doc = await deliveryBoyRef.get();
           if (doc.exists) {
-            //navigation.navigate('DeliveryPersonStack', { screen: 'DeliveryBoyScreen' });
+            startLocationUpdates(user.uid); // Start location updates on login
           } else {
             await auth.signOut();
           }
@@ -33,16 +34,15 @@ export default function DeliveryBoyLogin({ navigation }) {
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const { user } = userCredential;
 
-      // Check if the user exists in the deliveryBoys collection
       const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
       const doc = await deliveryBoyRef.get();
 
       if (doc.exists) {
-       // navigation.navigate('DeliveryPersonStack', { screen: 'DeliveryBoyScreen' });
+        
+        startLocationUpdates(user.uid); // Start location updates on login
       } else {
-        // If user does not exist in deliveryBoys collection, show alert
         alert('You are not authorized to login as a delivery boy.');
-        await auth.signOut(); // Sign out the user if not authorized
+        await auth.signOut(); 
       }
     } catch (error) {
       console.error(error);

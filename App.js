@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native';
 import { auth, firestore } from './firebase';
+import { startLocationUpdates, stopLocationUpdates } from './view/locationTask';
 
 // Import stack screens
 import AuthStackScreen from './view/Stacks/AuthStackScreen';
@@ -36,11 +37,13 @@ export default function App() {
           const adminEmail = await fetchAdminEmail();
           if (adminEmail && user.email === adminEmail) {
             setRole('admin');
+            stopLocationUpdates(); // Stop location updates if the user is an admin
           } else {
             const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
             const deliveryBoyDoc = await deliveryBoyRef.get();
             if (deliveryBoyDoc.exists) {
               setRole('deliveryBoy');
+              startLocationUpdates(user.uid); // Start location updates for delivery boy
             } else {
               setRole(null);
             }
@@ -51,6 +54,7 @@ export default function App() {
         }
       } else {
         setRole(null);
+        stopLocationUpdates(); // Stop location updates when no user is logged in
       }
       setLoading(false);
     });

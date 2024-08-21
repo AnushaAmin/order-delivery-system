@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { auth, firestore } from '../../firebase';
+import { startLocationUpdates, stopLocationUpdates } from '../locationTask';
 
 export default function DeliveryBoyScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
@@ -11,6 +12,8 @@ export default function DeliveryBoyScreen({ navigation }) {
       try {
         const user = auth.currentUser;
         if (user) {
+          startLocationUpdates(); // Start location updates when the user is logged in
+
           const tasksSnapshot = await firestore.collection('packages')
             .where('assignedTo', '==', user.uid)
             .get();
@@ -27,31 +30,11 @@ export default function DeliveryBoyScreen({ navigation }) {
     };
 
     fetchAssignedTasks();
+
+    return () => {
+      stopLocationUpdates(); // Stop location updates when the screen unmounts or the user logs out
+    };
   }, []);
-
-  const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      const taskRef = firestore.collection('packages').doc(taskId);
-
-      if (newStatus === 'DELIVERED') {
-        await taskRef.update({
-          status: newStatus,
-          deliveredOn: new Date() // Save the delivery date
-        });
-      } else {
-        await taskRef.update({ status: newStatus });
-      }
-
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
-          task.id === taskId ? { ...task, status: newStatus, deliveredOn: newStatus === 'DELIVERED' ? new Date() : task.deliveredOn } : task
-        )
-      );
-    } catch (error) {
-      console.error('Error updating status:', error);
-      setErrorMsg('Error updating status. Please check logs for details.');
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -95,6 +78,7 @@ export default function DeliveryBoyScreen({ navigation }) {
         ) : (
           <Text>No tasks assigned.</Text>
         )}
+
         <TouchableOpacity 
           style={styles.button} 
           onPress={() => {
