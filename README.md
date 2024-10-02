@@ -1,4 +1,4 @@
-Order-Delivery System
+Order-Delivery System:
 This is a mobile application that helps manage the delivery of orders and tracks the real-time location of delivery boys. The app offers a smooth and efficient way for admins to assign orders, monitor delivery progress, and for delivery boys to update their statuses and view their current location.
 
 Features:
@@ -40,5 +40,5 @@ Delivery Boy Panel:
 3) Update the status of orders.
 4) Track your own location on the map.
 
-Contributing
+Contributing: 
 If you would like to contribute to this project, please feel free to fork the repository and create a pull request.
