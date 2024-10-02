@@ -16,10 +16,10 @@ export default function AdminStackScreen() {
       <AdminStack.Screen name="AdminScreen" component={AdminScreen} />
       <AdminStack.Screen name="RequestsScreen" component={RequestsScreen} />
       <AdminStack.Screen name="ApprovedDeliveryScreen" component={ApprovedDeliveryScreen} />
-      <AdminStack.Screen name="CreatePackageScreen" component={CreatePackageScreen}/>
-      <AdminStack.Screen name="AssignPackageScreen" component={AssignPackageScreen}/>
-      <AdminStack.Screen name="DeliveryBoyDetailsScreen" component={DeliveryBoyDetailsScreen}/>
-      <AdminStack.Screen name="ViewLocation" component={ViewLocation}/>
+      <AdminStack.Screen name="CreatePackageScreen" component={CreatePackageScreen} />
+      <AdminStack.Screen name="AssignPackageScreen" component={AssignPackageScreen} />
+      <AdminStack.Screen name="DeliveryBoyDetailsScreen" component={DeliveryBoyDetailsScreen} />
+      <AdminStack.Screen name="ViewLocation" component={ViewLocation} />
     </AdminStack.Navigator>
   );
 }

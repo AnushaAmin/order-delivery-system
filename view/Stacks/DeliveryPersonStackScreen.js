@@ -9,7 +9,7 @@ export default function DeliveryPersonStackScreen() {
   return (
     <DeliveryPersonStack.Navigator>
       <DeliveryPersonStack.Screen name="DeliveryBoyScreen" component={DeliveryBoyScreen} />
-     <DeliveryPersonStack.Screen name="ViewLocation" component={ViewLocation} />
+      <DeliveryPersonStack.Screen name="ViewLocation" component={ViewLocation} />
     </DeliveryPersonStack.Navigator>
   );
 }

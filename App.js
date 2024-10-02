@@ -1,20 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { ActivityIndicator } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { Platform, Alert, ActivityIndicator } from 'react-native';
 import { auth, firestore } from './firebase';
 import { startLocationUpdates, stopLocationUpdates } from './view/locationTask';
-
-// Import stack screens
 import AuthStackScreen from './view/Stacks/AuthStackScreen';
 import DeliveryPersonStackScreen from './view/Stacks/DeliveryPersonStackScreen';
 import AdminStackScreen from './view/Stacks/AdminStackScreen';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(null); // Use null to distinguish between loading and no role
+  const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [role, setRole] = React.useState(null);
 
   useEffect(() => {
+    const getNotificationPermissions = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+    };
+
+    const setupNotificationHandler = () => {
+      Notifications.addNotificationReceivedListener(notification => {
+        console.log('Notification received:', notification);
+      });
+
+      Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('Notification response received:', response);
+      });
+
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
+      });
+    };
+
+    getNotificationPermissions();
+    setupNotificationHandler();
+
     const fetchAdminEmail = async () => {
       try {
         const adminRef = firestore.collection('admin').limit(1);
@@ -37,13 +64,13 @@ export default function App() {
           const adminEmail = await fetchAdminEmail();
           if (adminEmail && user.email === adminEmail) {
             setRole('admin');
-            stopLocationUpdates(); // Stop location updates if the user is an admin
+            stopLocationUpdates(); 
           } else {
             const deliveryBoyRef = firestore.collection('deliveryBoys').doc(user.uid);
             const deliveryBoyDoc = await deliveryBoyRef.get();
             if (deliveryBoyDoc.exists) {
               setRole('deliveryBoy');
-              startLocationUpdates(user.uid); // Start location updates for delivery boy
+              startLocationUpdates(user.uid);
             } else {
               setRole(null);
             }
@@ -54,12 +81,12 @@ export default function App() {
         }
       } else {
         setRole(null);
-        stopLocationUpdates(); // Stop location updates when no user is logged in
+        stopLocationUpdates(); 
       }
       setLoading(false);
     });
 
-    return unsubscribe; // Cleanup subscription on unmount
+    return unsubscribe;
   }, []);
 
   if (loading) {
@@ -71,7 +98,7 @@ export default function App() {
       {role === 'admin' ? (
         <AdminStackScreen />
       ) : role === 'deliveryBoy' ? (
-        <DeliveryPersonStackScreen/>
+        <DeliveryPersonStackScreen />
       ) : (
         <AuthStackScreen />
       )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { firestore } from '../../firebase';
 
 export default function CreatePackageScreen({ navigation }) {
@@ -17,6 +17,7 @@ export default function CreatePackageScreen({ navigation }) {
       navigation.goBack();
     } catch (error) {
       console.error('Error creating package:', error);
+      alert('Failed to create package. Please try again.');
     }
   };
 

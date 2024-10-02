@@ -18,7 +18,7 @@ export default function ViewLocation({ route }) {
           location: new firebase.firestore.GeoPoint(lat, long),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // Update the timestamp
         }, { merge: true });
-        console.log('Location updated in Firestore:', lat, long);
+       // console.log('Location updated in Firestore:', lat, long);
       } catch (err) {
         console.error('Error updating location:', err);
         setError('Error updating location.');
@@ -34,7 +34,7 @@ export default function ViewLocation({ route }) {
         }
 
         let { coords } = await Location.getCurrentPositionAsync({});
-        console.log('Fetched coordinates:', coords);
+       // console.log('Fetched coordinates:', coords);
         setLocation(coords);
         setLoading(false);
 
@@ -42,7 +42,7 @@ export default function ViewLocation({ route }) {
 
         const locationUpdateInterval = setInterval(async () => {
           let { coords } = await Location.getCurrentPositionAsync({});
-          console.log('Updated coordinates:', coords);
+         // console.log('Updated coordinates:', coords);
           setLocation(coords);
           await updateLocationInDatabase(coords.latitude, coords.longitude);
         }, 60000);
